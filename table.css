@@ -1,0 +1,51 @@
+/* https://codepen.io/nirmalkc/pen/oswdB */
+
+div.tableContainer {
+    display: table;
+	overflow: auto;
+}
+
+/* Reset overflow value to hidden for all non-IE browsers. */
+html>body div.tableContainer {
+	overflow: hidden;
+}
+
+/* set table header to a fixed position. WinIE 6.x only                                       */
+/* In WinIE 6.x, any element with a position property set to relative and is a child of       */
+/* an element that has an overflow property set, the relative value translates into fixed.    */
+/* Ex: parent element DIV with a class of tableContainer has an overflow property set to auto */
+
+thead.fixedHeader tr {
+	position: relative;
+}
+
+/* set THEAD element to have block level attributes. All other non-IE browsers            */
+/* this enables overflow to work on TBODY element. All other non-IE, non-Mozilla browsers */
+
+table thead, table tbody tr {
+    display:table;
+    min-width:600px;
+    width:100%;
+    table-layout:auto; } /* make it auto when clusterize.js is used */
+
+table.scrollable tbody {
+	display:block;
+	max-height:450px;
+	overflow-y:scroll; }
+
+
+td {
+    text-align:right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* highlight when selected or mousover */
+
+tr.highlight {
+    background-color: #C0E2F3;
+}
+
+
+
