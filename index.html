@@ -1,0 +1,45 @@
+<!doctype html>
+<head>
+    <meta charset="utf-8"/>
+    <title>D3Table</title>
+    <link rel="stylesheet" href="./clusterize.css">
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="./clusterize.js"></script>
+</head>
+<body>
+Example:
+<!--HTML-->
+<div class="clusterize">
+    <table>
+        <thead>
+        <tr>
+            <th>Headers</th>
+        </tr>
+        </thead>
+    </table>
+    <div id="scrollArea" class="clusterize-scroll">
+        <table>
+            <tbody id="contentArea" class="clusterize-content">
+            <tr class="clusterize-no-data">
+                <td>Loading data…</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+    var data = d3.range(5000).map(function () {
+        return '<tr>'
+            + d3.range(3).map(function () {
+                return '<td>' +Math.random() + '</td>';
+            }).join('')
+            + '</tr>';
+    });
+    var clusterize = new Clusterize({
+        rows: data,
+        scrollId: 'scrollArea',
+        contentId: 'contentArea'
+    });
+</script>
+</body>
+</html>
