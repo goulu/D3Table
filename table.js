@@ -1,60 +1,103 @@
 /*
-reusable D3.js (V3) class for a table
-* sortable
-* efficient with large data
+reusable D3.js class for a table
+* filterable thanks to D3
+* sortable (TODO)
+* efficient with large data thanks to https://clusterize.js.org/
 
-inspired by
-https://www.kryogenix.org/code/browser/sorttable/
-https://clusterize.js.org/
-
-@license Copyright BOBST SA 2018, all rights reserved
-@version 0.1
 @author  Philippe Guglielmetti https://github.com/goulu/
-@updated 2018.06.12
+@license LGPL
+@version 0.1
+@updated 2018.06.25
 
  */
 
-console.log('table.js loaded');
-
-/*export*/ class Table {
+/*export*/
+class Table extends Clusterize {
 
     constructor(element) {
-        this.element = element;
-        this.thead=element.select('thead')
-        this.tbody = element.select('tbody');
-        this.selected = [];
-        this.format(function (v) {return v;});
-        window.addEventListener("resize", this.resize.bind(this));
-    }
+        /* build DOM structure like this:
+            <table>
+                <thead>
+                <tr>
+                    <th>Headers</th>
+                </tr>
+                </thead>
+            </table>
+            <div id="scrollArea" class="clusterize-scroll">
+                <table>
+                    <tbody id="contentArea" class="clusterize-content">
+                    <tr class="clusterize-no-data">
+                        <td>Loading data…</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+         */
+        let thead = element.append("table").append("thead");
+        thead.insert("th").append("tr").text("Headers");
 
-    get rows() {
-        return this.tbody.selectAll("tr");
+        let scroll = element.append("div")
+            .attr("id", uniqueId)
+            .classed("clusterize-scroll", true)
+            .on('scroll', (function () {
+                    var prevScrollLeft = 0;
+                    return function () {
+                        var scrollLeft = this.scrollLeft();
+                        if (scrollLeft == prevScrollLeft) return;
+                        prevScrollLeft = scrollLeft;
+                        this.thead.style('margin-left', -scrollLeft);
+                    }
+                })
+            );
+
+        let tbody = scroll.append("table").append("tbody")
+            .attr("id", uniqueId)
+            .classed("clusterize-content", true);
+
+        let tr = tbody.append("tr").classed("clusterize-no-data", true);
+        tr.append("td").text("Loading data...");
+
+        super({
+            rows: [],
+            scrollId: scroll.attr("id"),
+            contentId: tbody.attr("id"),
+        });
+
+        this.selected = [];
+        this.element = element;
+        this.thead = thead;
+        this.tbody = element.select("tbody");
+
+        this.format(function (v) {
+            return v;
+        });
+
+        let table = this; // to avoid bind(this) below
+
+        this.options.callbacks = {
+            clusterChanged: function () {
+                table.fitHeaderColumns();
+                table.setHeaderWidth();
+            }
+        };
+
+
+        window.addEventListener("resize", table.resize);
     }
 
     // config
 
     header(cols) {
         this.columns = cols;
-        if (this.thead) { // append the header row
-            this.thead.append('tr')
-                .selectAll('th')
-                .data(this.columns)
-                .enter()
-                .append('th')
-                .text(function (column) {
-                    return column;
-                });
-        }
-        return this;
-    }
-    
-    resize() {
-        // assign header widths to column widths
-        let th=this.thead.selectAll('th')[0];
-        let td=this.tbody.select("tr").selectAll('td')[0];
-        for (var i = 0; i < th.length; i++) {
-            th[i].width=td[i].clientWidth;
-        };
+        this.thead.selectAll("th")
+            .remove();
+        this.thead.selectAll("th")
+            .data(this.columns)
+            .enter()
+            .append("th")
+            .text(function (column) {
+                return column;
+            });
         return this;
     }
 
@@ -63,49 +106,17 @@ console.log('table.js loaded');
         return this;
     }
 
-    // run
-
+// run
     data(d) {
-        // data is in fact assigned to the rows
         if (d === undefined) {
-            return this.rows.data();
+            return this._data;
         }
-
-        const table = this;
-
-        let rows = this.rows
-            .data(d, function (d) {
-                return [d.datetime, d.id]
-            });
-
-        rows.enter().append('tr');
-
-        rows.order(); // https://stackoverflow.com/a/18032229/1395973
-
-        // create a cell in each row for each column
-
-
-        let cells = rows.selectAll("td")
-            .data(function (row) {
-                return table.columns.map(function (column) {
-                    return {column: column, value: table._format(row[column])};
-                });
-            });
-
-        cells.enter().append("td");
-
-        cells.text(function (d) {
-            return d.value;
-        });
-
-        cells.exit().remove();
-        rows.exit().remove();
-        this.resize();
-
-        return this.rows; // here we return the rows to allow chain call
+        this._data = d;
+        this.update(D3toClusterize(d, this._format));
+        return this;
     }
 
-    add(newdata) {
+    append(newdata) {
         // merge and sort data with current
         let data = this.data().concat(newdata);
         data = data.sort(function (a, b) {
@@ -118,7 +129,7 @@ console.log('table.js loaded');
         return this.data().indexOf(d);
     }
 
-    scrollTo(d, ms=1000) {
+    scrollTo(d, ms = 1000) {
         // smooth scroll to data d in ms milliseconds
         let node = this.tbody.node();
         let f = node.scrollHeight / node.rows.length;
@@ -135,7 +146,7 @@ console.log('table.js loaded');
 
         let line = table.indexOf(d);
         if (line < 0) {
-            console.log(d + 'not found in table');
+            console.log(d + "not found in table");
             return;
         }
 
@@ -163,4 +174,53 @@ console.log('table.js loaded');
         });
         this.selected = [];
     }
+
+    // events
+
+    resize() {
+        this.fitHeaderColumns();
+        this.setHeaderWidth()
+    }
+
+    // Makes header columns equal width to content columns
+    fitHeaderColumns() {
+        let firstRow = this.tbody.select('tr:not(.clusterize-extra-row)');
+        let td = firstRow.selectAll('td');
+        let th = this.thead.selectAll('th');
+        let w = [];
+        td[0].map(function (d, i) {
+            w.push(d.clientWidth)
+        });
+        th.attr("width", function(d,i) {return w[i]});
+    }
+
+    setHeaderWidth() {
+        this.thead.width = this.tbody.width;
+    }
+}
+
+
+function
+
+uniqueId() {
+    // https://gist.github.com/gordonbrander/2230317
+    // Math.random should be unique because of its seeding algorithm.
+    // Convert it to base 36 (numbers + letters), and grab the first 9 characters
+    // after the decimal.
+    return "_" + Math.random().toString(36).substr(2, 9);
+};
+
+function
+
+D3toClusterize(d, format) {
+    // convert D3 data into row strings for clusterize
+    let result = [];
+    d.forEach(function (row) {
+        result.push('<tr>'
+            + row.map(function (d) {
+                return '<td>' + format(d) + '</td>';
+            }).join('')
+            + '</tr>');
+    });
+    return result;
 }

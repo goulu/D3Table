@@ -1,45 +1,28 @@
 <!doctype html>
+<html>
 <head>
     <meta charset="utf-8"/>
     <title>D3Table</title>
-    <link rel="stylesheet" href="./clusterize.css">
-    <script src="https://d3js.org/d3.v5.min.js"></script>
-    <script src="./clusterize.js"></script>
+    <link rel="stylesheet" href="../Clusterize.js/clusterize.css">
+    <script src="../Clusterize.js/clusterize.js"></script>
+    <script src='http://d3js.org/d3.v3.js' type='text/javascript'></script>
+    <script src="./table.js" type='text/javascript'></script>
 </head>
 <body>
-Example:
-<!--HTML-->
-<div class="clusterize">
-    <table>
-        <thead>
-        <tr>
-            <th>Headers</th>
-        </tr>
-        </thead>
-    </table>
-    <div id="scrollArea" class="clusterize-scroll">
-        <table>
-            <tbody id="contentArea" class="clusterize-content">
-            <tr class="clusterize-no-data">
-                <td>Loading data…</td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
+<h1>Table using D3.js and clusterize.js</h1>
+<ul>
+    <li>How to provide only the visible Table.data to Clusterize ?</li>
+</ul>
+<div class="table">
 </div>
 <script>
-    var data = d3.range(5000).map(function () {
-        return '<tr>'
-            + d3.range(3).map(function () {
-                return '<td>' +Math.random() + '</td>';
-            }).join('')
-            + '</tr>';
+    let n=5000;
+    var d = d3.range(n).map(function(d,i){
+        return [i,n-i,Math.random()];
     });
-    var clusterize = new Clusterize({
-        rows: data,
-        scrollId: 'scrollArea',
-        contentId: 'contentArea'
-    });
+    var table = new Table(d3.select('.table'))
+        .header(["a","b","c"])
+        .data(d);
 </script>
 </body>
 </html>
