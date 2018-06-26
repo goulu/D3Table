@@ -12,7 +12,9 @@
 Fork https://github.com/goulu/Clusterize.js accepts a function as data+update parameter !
 This allows to add sorting, filtering, wrapping in D3.js objects and other nice things :-)
 
-See https://rawgit.com/goulu/Clusterize.js/master/Clusterize.js.html !
+See https://rawgit.com/goulu/Clusterize.js/master/Clusterize.js.html for demo + retro compatibility tests
+
+See http://bl.ocks.org/goulu/a45ad9ba663e23d470dbd0cbbab1bdd7 for a D3.js table using this
 
 [Demo, usage, etc…](https://clusterize.js.org/)
 
