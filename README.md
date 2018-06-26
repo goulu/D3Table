@@ -9,6 +9,9 @@
 
 > Tiny vanilla JS plugin to display large data sets easily
 
+Fork https://github.com/goulu/Clusterize.js accepts a function as data+update parameter !
+This allows to add sorting, filtering, wrapping in D3.js objects and other nice things :-)
+
 [Demo, usage, etc…](https://clusterize.js.org/)
 
-[![example](http://nexts.github.io/Clusterize.js/img/table_example.gif)](https://clusterize.js.org/)
+[![example](http://goulu.github.io/Clusterize.js/Clusterize.js.html)](https://clusterize.js.org/)
