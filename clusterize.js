@@ -144,7 +144,7 @@
       self.html((clean ? self.generateEmptyRow() : _rows()).join(''));
     }
     self.refresh = function (force) {
-      if (self.getRowsHeight(frow) || force) self.update(frow);
+      if (self.getRowsHeight(nrows) || force) self.update(frow,nrows);
     }
     self.update = function (new_rows, new_nrows = 0) {
       // a new_nrows should be specified if new_rows is a function, otherwise it's recalculated
@@ -160,7 +160,7 @@
       self.scroll_elem.scrollTop = scroll_top;
     }
     self.clear = function () {
-      self.update([]);
+      self.update([],0);
     }
     self.getRowsAmount = function () {
       return nrows;
