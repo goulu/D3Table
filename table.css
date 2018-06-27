@@ -1,45 +1,86 @@
-/* https://codepen.io/nirmalkc/pen/oswdB */
+/* copied from clusterize.css */
 
-div.tableContainer {
-    display: table;
-	overflow: auto;
+/* max-height - the only parameter in this file that needs to be edited.
+ * Change it to suit your needs. The rest is recommended to leave as is.
+ */
+.clusterize-scroll{
+    max-height: 550px;
+    overflow: auto;
 }
 
-/* Reset overflow value to hidden for all non-IE browsers. */
-html>body div.tableContainer {
-	overflow: hidden;
+/**
+ * Avoid vertical margins for extra tags
+ * Necessary for correct calculations when rows have nonzero vertical margins
+ */
+.clusterize-extra-row{
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
 }
 
-/* set table header to a fixed position. WinIE 6.x only                                       */
-/* In WinIE 6.x, any element with a position property set to relative and is a child of       */
-/* an element that has an overflow property set, the relative value translates into fixed.    */
-/* Ex: parent element DIV with a class of tableContainer has an overflow property set to auto */
-
-thead.fixedHeader tr {
-	position: relative;
+/* By default extra tag .clusterize-keep-parity added to keep parity of rows.
+ * Useful when used :nth-child(even/odd)
+ */
+.clusterize-extra-row.clusterize-keep-parity{
+    display: none;
 }
 
-/* set THEAD element to have block level attributes. All other non-IE browsers            */
-/* this enables overflow to work on TBODY element. All other non-IE, non-Mozilla browsers */
+/* During initialization clusterize adds tabindex to force the browser to keep focus
+ * on the scrolling list, see issue #11
+ * Outline removes default browser's borders for focused elements.
+ */
+.clusterize-content{
+    outline: 0;
+    counter-reset: clusterize-counter;
+}
 
-table thead, table tbody tr {
-    display:table;
-    min-width:600px;
-    width:100%;
-    table-layout:auto; } /* make it auto when clusterize.js is used */
+/* Centering message that appears when no data provided
+ */
+.clusterize-no-data td{
+    text-align: center;
+}
 
-table.scrollable tbody {
-	display:block;
-	max-height:450px;
-	overflow-y:scroll; }
+/*  Generic Styling, for Desktops/Laptops
+from http://bl.ocks.org/AMDS/4a61497182b8fcb05906
+*/
 
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+/* Zebra striping */
+tr:nth-of-type(odd) {
+    background: #eee;
+}
+th {
+    background: #333;
+    color: white;
+    font-weight: bold;
+    cursor: s-resize;
+    background-repeat: no-repeat;
+    background-position: 3% center;
+}
+td, th {
+    padding: 6px;
+    border: 1px solid #ccc;
+    text-align: left;
+}
+
+th.des:after {
+    content: "\25B4";
+}
+
+th.aes:after {
+    content: "\25BE";
+}
+
+/* minimum width
+*/
 
 td {
-    text-align:right;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    width: 1%;
     white-space: nowrap;
 }
+
 
 /* highlight when selected or mousover */
 

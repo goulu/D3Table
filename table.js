@@ -1,7 +1,8 @@
 /*
 reusable D3.js class for a table
 * filterable thanks to D3
-* sortable (TODO)
+* sortable thanks to http://bl.ocks.org/AMDS/4a61497182b8fcb05906
+* (TODO : make it like https://www.kryogenix.org/code/browser/sorttable/)
 * efficient with large data thanks to https://clusterize.js.org/
 
 @author  Philippe Guglielmetti https://github.com/goulu/
@@ -63,7 +64,6 @@ class Table extends Clusterize {
       contentId: tbody.attr("id"),
     });
 
-    this.selected = [];
     this.element = element;
     this.thead = thead;
     this.tbody = element.select("tbody");
@@ -72,7 +72,7 @@ class Table extends Clusterize {
       return v;
     });
 
-    let table=this;
+    let table = this;
 
     this.options.callbacks = {
       clusterChanged: function () {
@@ -82,11 +82,15 @@ class Table extends Clusterize {
     };
 
     window.addEventListener("resize", this.resize.bind(this));
+
+    this.selected = [];
+    this.sortAscending = true;
   }
 
   // config
 
   header(cols) {
+    let table = this;
     this.columns = cols;
     this.thead.selectAll("th")
       .remove();
@@ -96,6 +100,20 @@ class Table extends Clusterize {
       .append("th")
       .text(function (column) {
         return column;
+      })
+      .on('click', function (d, i) {
+        let th = d3.select(this);
+        if (table.sortAscending) {
+          table.sort(function (x, y) {
+            return x[i]-y[i]
+          })
+        } else {
+          table.sort(function (x, y) {
+            return y[i]-x[i]
+          })
+        }
+        table.sortAscending = !table.sortAscending;
+        th.classed('aes', table.sortAscending).classed('des', !table.sortAscending);
       });
     return this;
   }
@@ -123,6 +141,12 @@ class Table extends Clusterize {
       d.length
     );
     return this;
+  }
+
+  sort(f) {
+    // shaker_sort(this.__data__, f); // stable, but slow
+    this.data().sort(f); // quick ...
+    this.data(this.data()) // refresh
   }
 
   append(newdata) {
@@ -193,21 +217,32 @@ class Table extends Clusterize {
 
   // Makes header columns equal width to content columns
   fitHeaderColumns() {
-    let firstRow = this.tbody.select('tr:not(.clusterize-extra-row)');
-    let td = firstRow.selectAll('td');
-    let th = this.thead.selectAll('th');
-    let w = [];
-    td[0].map(function (d, i) {
-      w.push(d.clientWidth)
-    });
-    th.attr("width", function (d, i) {
-      return w[i]
-    });
+    let firstrow = this.tbody.select('tr:not(.clusterize-extra-row)');
+    width(this.thead.selectAll('th'), width(firstrow.selectAll('td')));
   }
 
   setHeaderWidth() {
-    this.thead.width = this.tbody.width;
+    width(this.thead, width(this.tbody));
   }
+}
+
+function width(sel, value) {
+  // mimics jQuery for D3 https://api.jquery.com/category/dimensions/
+  if (value === undefined) { // get
+    let w = [];
+    sel.each(function (d) {
+      w.push(this.getBoundingClientRect().width);
+    });
+    return w;
+  }
+  else { // set
+    sel.style("width", function (d, i) {
+      let w = value[i];
+      return w - 14 + "px"; // 14 is 2*(6+1) padding and margin, but it's still wrong
+    });
+  }
+
+  return sel; // for chaining
 }
 
 
@@ -218,3 +253,39 @@ function uniqueId() {
   // after the decimal.
   return "_" + Math.random().toString(36).substr(2, 9);
 };
+
+function shaker_sort(list, comp_func) {
+  // A stable sort function to allow multi-level sorting of data
+  // see: http://en.wikipedia.org/wiki/Cocktail_sort
+  // thanks to Joseph Nahmias
+  var b = 0;
+  var t = list.length - 1;
+  var swap = true;
+
+  while (swap) {
+    swap = false;
+    for (var i = b; i < t; ++i) {
+      if (comp_func(list[i], list[i + 1]) > 0) {
+        var q = list[i];
+        list[i] = list[i + 1];
+        list[i + 1] = q;
+        swap = true;
+      }
+    } // for
+    t--;
+
+    if (!swap) break;
+
+    for (var i = t; i > b; --i) {
+      if (comp_func(list[i], list[i - 1]) < 0) {
+        var q = list[i];
+        list[i] = list[i - 1];
+        list[i - 1] = q;
+        swap = true;
+      }
+    } // for
+    b++;
+
+  } // while(swap)
+  return list;
+}
