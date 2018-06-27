@@ -10,18 +10,18 @@
 </head>
 <body>
 <h1>Table using D3.js and clusterize.js</h1>
-<ul>
-    <li>How to provide only the visible Table.data to Clusterize ?</li>
-</ul>
+(in fact it currently uses <a href="https://github.com/goulu/Clusterize.js">my fork of clusterize.js</a>
+which allows to specify a function providing data for each row,
+which makes it even faster and handier for sorting, filtering etc.)
 <div class="table">
 </div>
 <script>
-    let n=5000;
+    let n=50000;
     var d = d3.range(n).map(function(d,i){
-        return [i,n-i,Math.random()];
+        return [i,n-i,Math.sin(i/100)];
     });
     var table = new Table(d3.select('.table'))
-        .header(["a","b","c"])
+        .header(["i","n-i","sin"])
         .data(d);
 </script>
 </body>
