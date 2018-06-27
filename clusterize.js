@@ -198,7 +198,7 @@
         opts.tag = frow(0).match(/<([^>\s/]*)/)[1].toLowerCase();
       }
       var nchildren = this.content_elem.children.length;
-      if (!opts.tag && nchildren > 0) {
+      if (!opts.tag) {
         opts.tag = this.content_elem.children[0].tagName.toLowerCase();
       }
       if (nchildren <= 1) {
