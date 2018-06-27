@@ -72,6 +72,8 @@ class Table extends Clusterize {
       return v;
     });
 
+    let table=this;
+
     this.options.callbacks = {
       clusterChanged: function () {
         table.fitHeaderColumns();
