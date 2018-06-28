@@ -105,11 +105,11 @@ class Table extends Clusterize {
         let th = d3.select(this);
         if (table.sortAscending) {
           table.sort(function (x, y) {
-            return x[i]-y[i]
+            return x[i] - y[i]
           })
         } else {
           table.sort(function (x, y) {
-            return y[i]-x[i]
+            return y[i] - x[i]
           })
         }
         table.sortAscending = !table.sortAscending;
@@ -217,14 +217,26 @@ class Table extends Clusterize {
 
   // Makes header columns equal width to content columns
   fitHeaderColumns() {
-    let firstrow = this.tbody.select('tr:not(.clusterize-extra-row)');
-    width(this.thead.selectAll('th'), width(firstrow.selectAll('td')));
+    let scrollBarWidth = width(this.element)[0] - width(this.tbody)[0],
+      td = this.tbody.select('tr:not(.clusterize-extra-row)').selectAll('td'),
+      w = width(td);
+    w[w.length - 1] += scrollBarWidth;
+    width(this.thead.selectAll('th'), w);
   }
 
   setHeaderWidth() {
     width(this.thead, width(this.tbody));
   }
 }
+
+//https://stackoverflow.com/a/25413534/1395973
+d3.selection.prototype.first = function () {
+  return d3.select(this[0][0]);
+};
+d3.selection.prototype.last = function () {
+  var last = this.size() - 1;
+  return d3.select(this[0][last]);
+};
 
 function width(sel, value) {
   // mimics jQuery for D3 https://api.jquery.com/category/dimensions/
@@ -238,7 +250,7 @@ function width(sel, value) {
   else { // set
     sel.style("width", function (d, i) {
       let w = value[i];
-      return w - 14 + "px"; // 14 is 2*(6+1) padding and margin, but it's still wrong
+      return w + "px";
     });
   }
 
