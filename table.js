@@ -75,10 +75,7 @@ class Table extends Clusterize {
     let table = this;
 
     this.options.callbacks = {
-      clusterChanged: function () {
-        table.fitHeaderColumns();
-        table.setHeaderWidth();
-      }
+      clusterChanged: this.resize.bind(this)
     };
 
     window.addEventListener("resize", this.resize.bind(this));
@@ -112,6 +109,7 @@ class Table extends Clusterize {
             return y[i] - x[i]
           })
         }
+        table.thead.selectAll('th').classed('aes', false).classed('des', false);
         table.sortAscending = !table.sortAscending;
         th.classed('aes', table.sortAscending).classed('des', !table.sortAscending);
       });
@@ -211,21 +209,12 @@ class Table extends Clusterize {
   // events
 
   resize() {
-    this.fitHeaderColumns();
-    this.setHeaderWidth()
-  }
-
-  // Makes header columns equal width to content columns
-  fitHeaderColumns() {
+    // Makes header columns equal width to content columns
     let scrollBarWidth = width(this.element)[0] - width(this.tbody)[0],
       td = this.tbody.select('tr:not(.clusterize-extra-row)').selectAll('td'),
       w = width(td);
     w[w.length - 1] += scrollBarWidth;
     width(this.thead.selectAll('th'), w);
-  }
-
-  setHeaderWidth() {
-    width(this.thead, width(this.tbody));
   }
 }
 
