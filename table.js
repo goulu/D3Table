@@ -80,7 +80,7 @@ class Table extends Clusterize {
 
     window.addEventListener("resize", this.resize.bind(this));
 
-    this.__data__=[];
+    this.__data__ = [];
     this.selected = [];
     this.sortAscending = true;
   }
@@ -100,18 +100,21 @@ class Table extends Clusterize {
         return column;
       })
       .on('click', function (d, i) {
-        let th = d3.select(this);
+        if (!isArray(table.data()[0])) { // rows are dicts
+          i = table.columns[i]; // index by field
+        }
         if (table.sortAscending) {
           table.sort(function (x, y) {
-            return x[i] - y[i]
+            return cmp(x[i], y[i])
           })
         } else {
           table.sort(function (x, y) {
-            return y[i] - x[i]
+            return cmp(y[i], x[i])
           })
         }
         table.thead.selectAll('th').classed('aes', false).classed('des', false);
         table.sortAscending = !table.sortAscending;
+        let th = d3.select(this);
         th.classed('aes', table.sortAscending).classed('des', !table.sortAscending);
       });
     return this;
@@ -128,15 +131,17 @@ class Table extends Clusterize {
       return this.__data__;
     }
     this.__data__ = d;
-    table=this;
+    table = this;
     this.update(function (i) {
-        let row=d[i];
-        if(!isArray(row)) { // suppose it's a dict
-          row=table.columns.map(function (d,i){return row[d]})
+        let row = d[i];
+        if (!isArray(row)) { // suppose it's a dict
+          row = table.columns.map(function (d, i) {
+            return row[d]
+          })
         }
         return '<tr>'
           + row.map(function (cell) {
-            return '<td>' + (cell===undefined?'':table._format(cell)) + '</td>';
+            return '<td>' + (cell === undefined ? '' : table._format(cell)) + '</td>';
           }).join('')
           + '</tr>'
       }
@@ -153,7 +158,7 @@ class Table extends Clusterize {
   }
 
   filter(f) {
-    self._filter=f;
+    self._filter = f;
     this.data(this.data()) // refresh
   }
 
@@ -300,6 +305,12 @@ function shaker_sort(list, comp_func) {
 
   } // while(swap)
   return list;
+}
+
+function cmp(a, b) {
+  if (a == b) return 0;
+  if (a > b) return 1;
+  return -1;
 }
 
 function isArray(arr) {
