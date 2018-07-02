@@ -1,14 +1,14 @@
 /*
-reusable D3.js class for a table
+reusable D3.js class for (LARGE) tables
+* efficient with large data thanks to https://clusterize.js.org/
 * filterable thanks to D3
 * sortable thanks to http://bl.ocks.org/AMDS/4a61497182b8fcb05906
-* (TODO : make it like https://www.kryogenix.org/code/browser/sorttable/)
-* efficient with large data thanks to https://clusterize.js.org/
+* and https://www.kryogenix.org/code/browser/sorttable/)
 
 @author  Philippe Guglielmetti https://github.com/goulu/
 @license LGPL 3
-@version 0.1
-@updated 2018.06.25
+@version 0.2
+@updated 2018.07.02
 
  */
 
@@ -51,22 +51,22 @@ class Table extends Clusterize {
         })
       );
 
-    let tbody = scroll.append("table").append("tbody")
+    let rows = scroll.append("table").append("tbody")
       .attr("id", uniqueId)
       .classed("clusterize-content", true);
 
-    let tr = tbody.append("tr").classed("clusterize-no-data", true);
+    let tr = rows.append("tr").classed("clusterize-no-data", true);
     tr.append("td").text("Loading data...");
 
     super({
       // rows: [], // do not specify it here
       scrollId: scroll.attr("id"),
-      contentId: tbody.attr("id"),
+      contentId: rows.attr("id"),
     });
 
     this.element = element;
     this.thead = thead;
-    this.tbody = element.select("tbody");
+    this.rows = element.select("tbody");
 
     this.format(function (v) {
       return v;
@@ -80,6 +80,7 @@ class Table extends Clusterize {
 
     window.addEventListener("resize", this.resize.bind(this));
 
+    this.__data__=[];
     this.selected = [];
     this.sortAscending = true;
   }
@@ -127,11 +128,15 @@ class Table extends Clusterize {
       return this.__data__;
     }
     this.__data__ = d;
-    let fmt = this._format
+    table=this;
     this.update(function (i) {
+        let row=d[i];
+        if(!isArray(row)) { // suppose it's a dict
+          row=table.columns.map(function (d,i){return row[d]})
+        }
         return '<tr>'
-          + d[i].map(function (cell) {
-            return '<td>' + fmt(cell) + '</td>';
+          + row.map(function (cell) {
+            return '<td>' + (cell===undefined?'':table._format(cell)) + '</td>';
           }).join('')
           + '</tr>'
       }
@@ -147,8 +152,14 @@ class Table extends Clusterize {
     this.data(this.data()) // refresh
   }
 
-  append(newdata) {
+  filter(f) {
+    self._filter=f;
+    this.data(this.data()) // refresh
+  }
+
+  add(newdata) {
     // merge and sort data with current
+    // don't rename it "append" to avoid conflicts with Clusterize and/or D3
     let data = this.data().concat(newdata);
     data = data.sort(function (a, b) {
       return d3.ascending(a.datetime, b.datetime)
@@ -162,7 +173,7 @@ class Table extends Clusterize {
 
   scrollTo(d, ms = 1000) {
     // smooth scroll to data d in ms milliseconds
-    let node = this.tbody.node();
+    let node = this.rows.node();
     let f = node.scrollHeight / node.rows.length;
     let nlines = node.clientHeight / f;
 
@@ -181,7 +192,7 @@ class Table extends Clusterize {
       return;
     }
 
-    this.tbody.transition()
+    this.rows.transition()
       .duration(ms)
       .tween("scroll", scrollTween(
         (line - Math.round(nlines / 2)) * f
@@ -210,8 +221,8 @@ class Table extends Clusterize {
 
   resize() {
     // Makes header columns equal width to content columns
-    let scrollBarWidth = width(this.element)[0] - width(this.tbody)[0],
-      td = this.tbody.select('tr:not(.clusterize-extra-row)').selectAll('td'),
+    let scrollBarWidth = width(this.element)[0] - width(this.rows)[0],
+      td = this.rows.select('tr:not(.clusterize-extra-row)').selectAll('td'),
       w = width(td);
     w[w.length - 1] += scrollBarWidth;
     width(this.thead.selectAll('th'), w);
@@ -289,4 +300,8 @@ function shaker_sort(list, comp_func) {
 
   } // while(swap)
   return list;
+}
+
+function isArray(arr) {
+  return Object.prototype.toString.call(arr) === '[object Array]';
 }
