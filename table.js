@@ -15,7 +15,7 @@ reusable D3.js class for (LARGE) tables
 /*export*/
 class Table extends Clusterize {
 
-  constructor(element) {
+  constructor(element, height = 400) {
     /* build DOM structure like this:
         <table>
             <thead>
@@ -39,6 +39,7 @@ class Table extends Clusterize {
 
     let scroll = element.append("div")
       .attr("id", uniqueId)
+      .style("max-height", height + 'px')
       .classed("clusterize-scroll", true)
       .on('scroll', (function () {
           var prevScrollLeft = 0;
@@ -63,6 +64,7 @@ class Table extends Clusterize {
 
     this.element = element;
     this.thead = thead;
+    this.scroll = scroll;
     this.rows = element.select("tbody");
 
     this.format(function (v) {
@@ -81,7 +83,7 @@ class Table extends Clusterize {
     tr.append("td").text("Loading data...");
 
     this.__data__ = [];
-    this.selected = [];
+    this._selected = new Set([]);
     this.sortAscending = true;
   }
 
@@ -105,57 +107,73 @@ class Table extends Clusterize {
         return column;
       })
       .on('click', function (d, i) {
-        table.sort(i,table.sortAscending);
+        table.sort(i, table.sortAscending);
         table.sortAscending = !table.sortAscending; // for the next time
       });
     return this;
   }
 
-  sort(i, ascending=true) {
+  sort(i, ascending = true, stable = false) {
+    // sort data by i-th column, ascending or descending
+    // optionally with stable sort algo (slower...)
     let th = this.thead.selectAll('th');
     th.classed('aes', false).classed('des', false);
     d3.select(th[0][i]).classed('aes', !ascending).classed('des', ascending);
+    let data = this.data();
+    if (data.length == 0) {
+      return;
+    }
 
-    if (!isArray(table.data()[0])) { // rows are dicts
+    if (!isArray(data[0])) { // rows are dicts
       i = this.columns[i]; // index by field
     }
-    // find a row with data so we can infer the type
-    let t, // undefined
-      j = 0
-    while (t === undefined) {
-      t = this.data()[j][i];
-      j = j + 1;
-    }
-    let f;
-    if (typeof t === 'string') {
-      f = function (x, y) {
-        return x[i].localeCompare(y[i], 'en', {'sensitivity': 'base'});
+
+    function f(x, y) {
+      // universal (?) comparison
+      try {
+        x = x[i]
+      }
+      catch (e) {
+        x = undefined;
+      }
+      try {
+        y = y[i]
+      }
+      catch (e) {
+        y = undefined;
+      }
+
+      if (x === y) {
+        return 0;
+      }
+      if (typeof x === 'string') {
+        return x.localeCompare(y, 'en', {'sensitivity': 'base'});
+      }
+      else if (typeof t === 'number') {
+        return x - y;
+      }
+      else {
+        return x > y ? 1 : -1
       }
     }
-    else if (typeof t === 'number') {
-      f = function (x, y) {
-        return x[i] - y[i];
-      }
-    }
-    else {
-      f = function (x, y) {
-        return x[i] === y[i] ? 0 : (x[i] > y[i] ? 1 : -1)
-      }
-    }
+
     if (!ascending) {
       let ff = f;
       f = function (x, y) {
         return ff(y, x);
       }
     }
-    // shaker_sort(this.__data__, f); // stable, but slow
-    this.data().sort(f); // quick ...
-    this.data(this.data()) // refresh
+    if (stable) {
+      shaker_sort(data, f);
+    } else {
+      data.sort(f);
+    }
+    this.draw();
   }
 
   filter(f) {
     self._filter = f;
-    this.data(this.data()) // refresh
+    this.draw();
   }
 
   on(e, f) {
@@ -169,7 +187,12 @@ class Table extends Clusterize {
       return this.__data__;
     }
     this.__data__ = d;
-    table = this;
+    return this.draw();
+  }
+
+  draw() {
+    let table = this;
+    let d=this.__data__;
     this.update(function (i) {
         let row = d[i];
         if (!isArray(row)) { // suppose it's a dict
@@ -207,14 +230,17 @@ class Table extends Clusterize {
       .on("mouseleave", fevent)
       .on("click", fevent)
       .on("dblclick", fevent)
+      .classed("highlight", function (d, i) {
+        return table._selected.has(i);
+      })
 
     return this;
   }
 
-  add(newdata, i=0) {
+  add(newdata, i = 0) {
     // merge and sort data with current
     // don't rename it "append" to avoid conflicts with Clusterize and/or D3
-    this.__data__= this.data().concat(newdata);
+    this.__data__ = this.data().concat(newdata);
     this.sort(i);
     return this.data();
   }
@@ -225,8 +251,14 @@ class Table extends Clusterize {
 
   scrollTo(d, ms = 1000) {
     // smooth scroll to data d in ms milliseconds
-    let node = this.rows.node();
-    let f = node.scrollHeight / node.rows.length;
+    let line = this.indexOf(d);
+    if (line < 0) {
+      console.log(d + "not found in table");
+      return;
+    }
+    let node = this.scroll.node();
+
+    let f = node.scrollHeight / this.data().length;
     let nlines = node.clientHeight / f;
 
     function scrollTween(offset) {
@@ -238,12 +270,6 @@ class Table extends Clusterize {
       };
     }
 
-    let line = table.indexOf(d);
-    if (line < 0) {
-      console.log(d + "not found in table");
-      return;
-    }
-
     this.rows.transition()
       .duration(ms)
       .tween("scroll", scrollTween(
@@ -253,16 +279,26 @@ class Table extends Clusterize {
   }
 
   select(d, i) {
+    if (i===undefined){
+      i=this.indexOf(d)
+    }
+    this._selected.add(i);
     let tr = this.rows.select("#r" + i);
     tr.classed("highlight", true);
-    this.selected.push(tr);
   }
 
-  deselect() {
-    this.selected.map(function (row) {
-      row.classed("highlight", false);
-    });
-    this.selected = [];
+  deselect(d,i) {
+    if (i===undefined){
+      if (d===undefined) {
+        this._selected.clear();
+        this.draw();
+        return
+      }
+      i=this.indexOf(d)
+    }
+    this._selected.delete(i);
+    let tr = this.rows.select("#r" + i);
+    tr.classed("highlight", false);
   }
 
   // events
