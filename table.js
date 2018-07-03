@@ -55,9 +55,6 @@ class Table extends Clusterize {
       .attr("id", uniqueId)
       .classed("clusterize-content", true);
 
-    let tr = rows.append("tr").classed("clusterize-no-data", true);
-    tr.append("td").text("Loading data...");
-
     super({
       // rows: [], // do not specify it here
       scrollId: scroll.attr("id"),
@@ -79,6 +76,9 @@ class Table extends Clusterize {
     };
 
     window.addEventListener("resize", this.resize.bind(this));
+
+    let tr = rows.append("tr").classed("clusterize-no-data", true);
+    tr.append("td").text("Loading data...");
 
     this.__data__ = [];
     this.selected = [];
@@ -125,6 +125,22 @@ class Table extends Clusterize {
     return this;
   }
 
+  sort(f) {
+    // shaker_sort(this.__data__, f); // stable, but slow
+    this.data().sort(f); // quick ...
+    this.data(this.data()) // refresh
+  }
+
+  filter(f) {
+    self._filter = f;
+    this.data(this.data()) // refresh
+  }
+
+  on(e, f) {
+    this.options.callbacks[e] = f.bind(this);
+    return this; // for chaining
+  }
+
 // run
   data(d) {
     if (d === undefined) {
@@ -139,7 +155,7 @@ class Table extends Clusterize {
             return row[d]
           })
         }
-        return '<tr>'
+        return '<tr id="r' + i + '">'  // way to find the data back. id must start with non numeric
           + row.map(function (cell) {
             return '<td>' + (cell === undefined ? '' : table._format(cell)) + '</td>';
           }).join('')
@@ -148,18 +164,28 @@ class Table extends Clusterize {
       ,
       d.length
     );
+
+    // (re)attach events to rows
+
+    function fevent(e) {
+      e = e || event;
+      if (e.type in table.options.callbacks) { // handle it
+        let target=e.target;
+        if (target.tagName=='TD') {
+          target=target.parentElement; // events are on rows (for now)
+        }
+        let i = Number(target.id.substr(1));  //get tr #id
+        let d = table.data()[i];
+        return table.options.callbacks[e.type](d, i);
+      }
+    }
+
+    this.rows.selectAll("tr")
+      .on("mouseover", fevent)
+      .on("mouseleave", fevent)
+      .on("click", fevent)
+
     return this;
-  }
-
-  sort(f) {
-    // shaker_sort(this.__data__, f); // stable, but slow
-    this.data().sort(f); // quick ...
-    this.data(this.data()) // refresh
-  }
-
-  filter(f) {
-    self._filter = f;
-    this.data(this.data()) // refresh
   }
 
   add(newdata) {
@@ -206,13 +232,9 @@ class Table extends Clusterize {
   }
 
   select(d, i) {
-    this.selected.push(
-      this.rows
-        .filter(function (d2, j) {
-          return d2 === d;
-        })
-        .classed("highlight", true)
-    );
+    let tr = this.rows.select("#r" + i);
+    tr.classed("highlight", true);
+    this.selected.push(tr);
   }
 
   deselect() {
@@ -235,15 +257,23 @@ class Table extends Clusterize {
 }
 
 //https://stackoverflow.com/a/25413534/1395973
-d3.selection.prototype.first = function () {
+d3
+  .selection
+  .prototype
+  .first = function () {
   return d3.select(this[0][0]);
 };
-d3.selection.prototype.last = function () {
+d3
+  .selection
+  .prototype
+  .last = function () {
   var last = this.size() - 1;
   return d3.select(this[0][last]);
 };
 
-function width(sel, value) {
+function
+
+width(sel, value) {
   // mimics jQuery for D3 https://api.jquery.com/category/dimensions/
   if (value === undefined) { // get
     let w = [];
@@ -263,7 +293,9 @@ function width(sel, value) {
 }
 
 
-function uniqueId() {
+function
+
+uniqueId() {
   // https://gist.github.com/gordonbrander/2230317
   // Math.random should be unique because of its seeding algorithm.
   // Convert it to base 36 (numbers + letters), and grab the first 9 characters
@@ -271,7 +303,9 @@ function uniqueId() {
   return "_" + Math.random().toString(36).substr(2, 9);
 };
 
-function shaker_sort(list, comp_func) {
+function
+
+shaker_sort(list, comp_func) {
   // A stable sort function to allow multi-level sorting of data
   // see: http://en.wikipedia.org/wiki/Cocktail_sort
   // thanks to Joseph Nahmias
@@ -307,12 +341,16 @@ function shaker_sort(list, comp_func) {
   return list;
 }
 
-function cmp(a, b) {
+function
+
+cmp(a, b) {
   if (a == b) return 0;
   if (a > b) return 1;
   return -1;
 }
 
-function isArray(arr) {
+function
+
+isArray(arr) {
   return Object.prototype.toString.call(arr) === '[object Array]';
 }
