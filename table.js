@@ -85,6 +85,11 @@ class Table extends Clusterize {
     this.sortAscending = true;
   }
 
+  format(f) {
+    this._format = f;
+    return this;
+  }
+
   // config
 
   header(cols) {
@@ -100,32 +105,49 @@ class Table extends Clusterize {
         return column;
       })
       .on('click', function (d, i) {
-        if (!isArray(table.data()[0])) { // rows are dicts
-          i = table.columns[i]; // index by field
-        }
-        if (table.sortAscending) {
-          table.sort(function (x, y) {
-            return cmp(x[i], y[i])
-          })
-        } else {
-          table.sort(function (x, y) {
-            return cmp(y[i], x[i])
-          })
-        }
-        table.thead.selectAll('th').classed('aes', false).classed('des', false);
-        table.sortAscending = !table.sortAscending;
-        let th = d3.select(this);
-        th.classed('aes', table.sortAscending).classed('des', !table.sortAscending);
+        table.sort(i,table.sortAscending);
+        table.sortAscending = !table.sortAscending; // for the next time
       });
     return this;
   }
 
-  format(f) {
-    this._format = f;
-    return this;
-  }
+  sort(i, ascending=true) {
+    let th = this.thead.selectAll('th');
+    th.classed('aes', false).classed('des', false);
+    d3.select(th[0][i]).classed('aes', !ascending).classed('des', ascending);
 
-  sort(f) {
+    if (!isArray(table.data()[0])) { // rows are dicts
+      i = this.columns[i]; // index by field
+    }
+    // find a row with data so we can infer the type
+    let t, // undefined
+      j = 0
+    while (t === undefined) {
+      t = this.data()[j][i];
+      j = j + 1;
+    }
+    let f;
+    if (typeof t === 'string') {
+      f = function (x, y) {
+        return x[i].localeCompare(y[i], 'en', {'sensitivity': 'base'});
+      }
+    }
+    else if (typeof t === 'number') {
+      f = function (x, y) {
+        return x[i] - y[i];
+      }
+    }
+    else {
+      f = function (x, y) {
+        return x[i] === y[i] ? 0 : (x[i] > y[i] ? 1 : -1)
+      }
+    }
+    if (!ascending) {
+      let ff = f;
+      f = function (x, y) {
+        return ff(y, x);
+      }
+    }
     // shaker_sort(this.__data__, f); // stable, but slow
     this.data().sort(f); // quick ...
     this.data(this.data()) // refresh
@@ -170,9 +192,9 @@ class Table extends Clusterize {
     function fevent(e) {
       e = e || event;
       if (e.type in table.options.callbacks) { // handle it
-        let target=e.target;
-        if (target.tagName=='TD') {
-          target=target.parentElement; // events are on rows (for now)
+        let target = e.target;
+        if (target.tagName == 'TD') {
+          target = target.parentElement; // events are on rows (for now)
         }
         let i = Number(target.id.substr(1));  //get tr #id
         let d = table.data()[i];
@@ -184,18 +206,17 @@ class Table extends Clusterize {
       .on("mouseover", fevent)
       .on("mouseleave", fevent)
       .on("click", fevent)
+      .on("dblclick", fevent)
 
     return this;
   }
 
-  add(newdata) {
+  add(newdata, i=0) {
     // merge and sort data with current
     // don't rename it "append" to avoid conflicts with Clusterize and/or D3
-    let data = this.data().concat(newdata);
-    data = data.sort(function (a, b) {
-      return d3.ascending(a.datetime, b.datetime)
-    });
-    return this.data(data);
+    this.__data__= this.data().concat(newdata);
+    this.sort(i);
+    return this.data();
   }
 
   indexOf(d) {
@@ -271,9 +292,7 @@ d3
   return d3.select(this[0][last]);
 };
 
-function
-
-width(sel, value) {
+function width(sel, value) {
   // mimics jQuery for D3 https://api.jquery.com/category/dimensions/
   if (value === undefined) { // get
     let w = [];
@@ -293,31 +312,27 @@ width(sel, value) {
 }
 
 
-function
-
-uniqueId() {
+function uniqueId() {
   // https://gist.github.com/gordonbrander/2230317
   // Math.random should be unique because of its seeding algorithm.
   // Convert it to base 36 (numbers + letters), and grab the first 9 characters
   // after the decimal.
   return "_" + Math.random().toString(36).substr(2, 9);
-};
+}
 
-function
-
-shaker_sort(list, comp_func) {
+function shaker_sort(list, comp_func) {
   // A stable sort function to allow multi-level sorting of data
   // see: http://en.wikipedia.org/wiki/Cocktail_sort
   // thanks to Joseph Nahmias
-  var b = 0;
-  var t = list.length - 1;
-  var swap = true;
+  let b = 0;
+  let t = list.length - 1;
+  let swap = true;
 
   while (swap) {
     swap = false;
     for (var i = b; i < t; ++i) {
       if (comp_func(list[i], list[i + 1]) > 0) {
-        var q = list[i];
+        let q = list[i];
         list[i] = list[i + 1];
         list[i + 1] = q;
         swap = true;
@@ -329,7 +344,7 @@ shaker_sort(list, comp_func) {
 
     for (var i = t; i > b; --i) {
       if (comp_func(list[i], list[i - 1]) < 0) {
-        var q = list[i];
+        let q = list[i];
         list[i] = list[i - 1];
         list[i - 1] = q;
         swap = true;
@@ -341,16 +356,7 @@ shaker_sort(list, comp_func) {
   return list;
 }
 
-function
 
-cmp(a, b) {
-  if (a == b) return 0;
-  if (a > b) return 1;
-  return -1;
-}
-
-function
-
-isArray(arr) {
+function isArray(arr) {
   return Object.prototype.toString.call(arr) === '[object Array]';
 }
