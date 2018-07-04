@@ -189,7 +189,7 @@ class Table extends Clusterize {
       let s = this.property("value"); // https://stackoverflow.com/a/31369759/1395973
       if (s === '') return true;
       let row = table.rowAsArray(d);
-      row = row.map(String).join('\u3000') // very unlikely character
+      row = row.map(table._format).join('\u3000') // very unlikely character
       return row.toLowerCase().indexOf(s.toLowerCase()) !== -1
     }
 
