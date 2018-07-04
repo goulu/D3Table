@@ -82,9 +82,14 @@ class Table extends Clusterize {
     let tr = rows.append("tr").classed("clusterize-no-data", true);
     tr.append("td").text("Loading data...");
 
-    this.__data__ = [];
+    this.filter(function (d, i) {
+      return true;
+    })
+
     this._selected = new Set([]);
     this.sortAscending = true;
+
+    this.__data__ = []; // don't call data() since it would clear any existing DOM table
   }
 
   format(f) {
@@ -172,8 +177,27 @@ class Table extends Clusterize {
   }
 
   filter(f) {
-    self._filter = f;
-    this.draw();
+    if (isFunction(f)) {
+      this._filter = f;
+      return this; // for chaining
+    }
+    // assume f is a selection of an input field
+    let table = this;
+
+    function anycolumn(d, i) {
+      // here, this is the input field, which is .bound
+      let s = this.property("value"); // https://stackoverflow.com/a/31369759/1395973
+      if (s === '') return true;
+      let row = table.rowAsArray(d);
+      row = row.map(String).join('\u3000') // very unlikely character
+      return row.toLowerCase().indexOf(s.toLowerCase()) !== -1
+    }
+
+    this.filter(anycolumn.bind(f)) // assign the filter function
+    f.on("input", function () { // set the update event
+      table.draw();
+    });
+    return this; // for chaining
   }
 
   on(e, f) {
@@ -190,16 +214,21 @@ class Table extends Clusterize {
     return this.draw();
   }
 
+  rowAsArray(row){
+    // return row as the array of visible cells
+    if (!isArray(row)) { // suppose it's a dict
+      row = table.columns.map(function (d, i) {
+        return row[d]
+      })
+    }
+    return row;
+  }
+
   draw() {
     let table = this;
-    let d=this.__data__;
+    let d = this.data().filter(table._filter);
     this.update(function (i) {
-        let row = d[i];
-        if (!isArray(row)) { // suppose it's a dict
-          row = table.columns.map(function (d, i) {
-            return row[d]
-          })
-        }
+        let row = table.rowAsArray(d[i]);
         return '<tr id="r' + i + '">'  // way to find the data back. id must start with non numeric
           + row.map(function (cell) {
             return '<td>' + (cell === undefined ? '' : table._format(cell)) + '</td>';
@@ -279,22 +308,22 @@ class Table extends Clusterize {
   }
 
   select(d, i) {
-    if (i===undefined){
-      i=this.indexOf(d)
+    if (i === undefined) {
+      i = this.indexOf(d)
     }
     this._selected.add(i);
     let tr = this.rows.select("#r" + i);
     tr.classed("highlight", true);
   }
 
-  deselect(d,i) {
-    if (i===undefined){
-      if (d===undefined) {
+  deselect(d, i) {
+    if (i === undefined) {
+      if (d === undefined) {
         this._selected.clear();
         this.draw();
         return
       }
-      i=this.indexOf(d)
+      i = this.indexOf(d)
     }
     this._selected.delete(i);
     let tr = this.rows.select("#r" + i);
@@ -313,7 +342,9 @@ class Table extends Clusterize {
   }
 }
 
-//https://stackoverflow.com/a/25413534/1395973
+
+// first and last of a selection
+// https://stackoverflow.com/a/25413534/1395973
 d3
   .selection
   .prototype
@@ -327,6 +358,8 @@ d3
   var last = this.size() - 1;
   return d3.select(this[0][last]);
 };
+
+// utility functions
 
 function width(sel, value) {
   // mimics jQuery for D3 https://api.jquery.com/category/dimensions/
@@ -392,7 +425,17 @@ function shaker_sort(list, comp_func) {
   return list;
 }
 
+function isFunction(fnc) {
+  //https://stackoverflow.com/a/7356528/1395973
+  return fnc && {}.toString.call(fnc) === '[object Function]';
+}
 
 function isArray(arr) {
   return Object.prototype.toString.call(arr) === '[object Array]';
+}
+
+function dictValues(d) {
+  return Object.keys(d).map(function (key) {
+    return d[key];
+  })
 }
