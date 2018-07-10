@@ -115,7 +115,7 @@ class Table extends Clusterize {
         table.sort(i, table.sortAscending);
         table.sortAscending = !table.sortAscending; // for the next time
       });
-    return this;
+    return this; // for chaining
   }
 
   sort(i, ascending = true, stable = false) {
@@ -126,7 +126,7 @@ class Table extends Clusterize {
     d3.select(th[0][i]).classed('aes', !ascending).classed('des', ascending);
     let data = this.data();
     if (data.length == 0) {
-      return;
+      return this; // for chaining
     }
 
     if (!isArray(data[0])) { // rows are dicts
@@ -174,6 +174,7 @@ class Table extends Clusterize {
       data.sort(f);
     }
     this.draw();
+    return this; // for chaining
   }
 
   filter(f) {
@@ -214,7 +215,7 @@ class Table extends Clusterize {
     return this.draw();
   }
 
-  rowAsArray(row){
+  rowAsArray(row) {
     // return row as the array of visible cells
     if (!isArray(row)) { // suppose it's a dict
       row = table.columns.map(function (d, i) {
@@ -266,25 +267,29 @@ class Table extends Clusterize {
     return this;
   }
 
-  add(newdata, i = 0) {
+  add(newdata, i = -1) {
     // merge and sort data with current
     // don't rename it "append" to avoid conflicts with Clusterize and/or D3
     this.__data__ = this.data().concat(newdata);
-    this.sort(i);
+    if (i >= 0) {
+      this.sort(i);
+    } else {
+      this.draw();
+    }
     return this.data();
   }
 
   indexOf(d) {
-    return this.data().indexOf(d);
+    let i=this.data().indexOf(d);
+    if (i < 0) {
+      console.log(d + "not found in table");
+    }
+    return i;
   }
 
   scrollTo(d, ms = 1000) {
     // smooth scroll to data d in ms milliseconds
     let line = this.indexOf(d);
-    if (line < 0) {
-      console.log(d + "not found in table");
-      return;
-    }
     let node = this.scroll.node();
 
     let f = node.scrollHeight / this.data().length;
@@ -305,6 +310,7 @@ class Table extends Clusterize {
         (line - Math.round(nlines / 2)) * f
         )
       );
+    return this; // for chaining
   }
 
   select(d, i) {
@@ -314,6 +320,7 @@ class Table extends Clusterize {
     this._selected.add(i);
     let tr = this.rows.select("#r" + i);
     tr.classed("highlight", true);
+    return this; // for chaining
   }
 
   deselect(d, i) {
@@ -328,6 +335,7 @@ class Table extends Clusterize {
     this._selected.delete(i);
     let tr = this.rows.select("#r" + i);
     tr.classed("highlight", false);
+    return this; // for chaining
   }
 
   // events
