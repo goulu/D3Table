@@ -82,14 +82,16 @@ class Table extends Clusterize {
     let tr = rows.append("tr").classed("clusterize-no-data", true);
     tr.append("td").text("Loading data...");
 
-    this.filter(function (d, i) {
+    this.__data__ = []; // don't call data() since it would clear any existing DOM table
+
+    this._filter = function (d, i) {
       return true;
-    })
+    }
 
     this._selected = new Set([]);
     this.sortAscending = true;
 
-    this.__data__ = []; // don't call data() since it would clear any existing DOM table
+
   }
 
   format(f) {
@@ -121,6 +123,8 @@ class Table extends Clusterize {
   sort(i, ascending = true, stable = false) {
     // sort data by i-th column, ascending or descending
     // optionally with stable sort algo (slower...)
+    let performance = window.performance,
+      t0 = performance.now();
     let th = this.thead.selectAll('th');
     th.classed('aes', false).classed('des', false);
     d3.select(th[0][i]).classed('aes', !ascending).classed('des', ascending);
@@ -132,6 +136,8 @@ class Table extends Clusterize {
     if (!isArray(data[0])) { // rows are dicts
       i = this.columns[i]; // index by field
     }
+
+    let ic=new Intl.Collator('en', {'sensitivity': 'base'});
 
     function f(x, y) {
       // universal (?) comparison
@@ -152,7 +158,7 @@ class Table extends Clusterize {
         return 0;
       }
       if (typeof x === 'string') {
-        return x.localeCompare(y, 'en', {'sensitivity': 'base'});
+        return ic.compare(x,y);
       }
       else if (typeof t === 'number') {
         return x - y;
@@ -174,12 +180,14 @@ class Table extends Clusterize {
       data.sort(f);
     }
     this.draw();
+    console.log("table.sort took " + (performance.now() - t0) + " milliseconds.")
     return this; // for chaining
   }
 
   filter(f) {
     if (isFunction(f)) {
       this._filter = f;
+      this.draw(); // apply filter
       return this; // for chaining
     }
     // assume f is a selection of an input field
@@ -195,7 +203,7 @@ class Table extends Clusterize {
     }
 
     this.filter(anycolumn.bind(f)) // assign the filter function
-    f.on("input", function () { // set the update event
+    f.on("input", function () { // set the update event of the input field
       table.draw();
     });
     return this; // for chaining
@@ -227,7 +235,9 @@ class Table extends Clusterize {
 
   draw() {
     let table = this;
-    let d = this.data().filter(table._filter);
+    let d = this.data();
+    if (d.length===0) return table;
+    d=d.filter(table._filter);
     this.update(function (i) {
         let row = table.rowAsArray(d[i]);
         return '<tr id="r' + i + '">'  // way to find the data back. id must start with non numeric
@@ -264,7 +274,7 @@ class Table extends Clusterize {
         return table._selected.has(i);
       })
 
-    return this;
+    return table;
   }
 
   add(newdata, i = -1) {
@@ -280,7 +290,7 @@ class Table extends Clusterize {
   }
 
   indexOf(d) {
-    let i=this.data().indexOf(d);
+    let i = this.data().indexOf(d);
     if (i < 0) {
       console.log(d + "not found in table");
     }
