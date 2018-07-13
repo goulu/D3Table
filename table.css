@@ -44,25 +44,27 @@ from http://bl.ocks.org/AMDS/4a61497182b8fcb05906
 */
 
 table {
-    width: 100%;
+    width: inherit !important;
     border-collapse: collapse;
 }
 /* Zebra striping */
 tr:nth-of-type(odd) {
     background: #eee;
 }
-th {
-    background: #333;
-    color: white;
-    font-weight: bold;
-    cursor: s-resize;
-    background-repeat: no-repeat;
-    background-position: 3% center;
-}
+
 td, th {
-    padding: 6px;
     border: 1px solid #ccc;
     text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+th {
+    font-weight: bold;
+    text-align: center;
+    background: #333;
+    color: white;
+    cursor: s-resize;
 }
 
 th.des:after {
@@ -78,7 +80,8 @@ th.aes:after {
 
 td {
     width: 1%;
-    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 
