@@ -90,8 +90,6 @@ class Table extends Clusterize {
 
     this._selected = new Set([]);
     this.sortAscending = true;
-
-
   }
 
   format(f) {
@@ -123,8 +121,6 @@ class Table extends Clusterize {
   sort(i, ascending = true, stable = false) {
     // sort data by i-th column, ascending or descending
     // optionally with stable sort algo (slower...)
-    let performance = window.performance,
-      t0 = performance.now();
     let th = this.thead.selectAll('th');
     th.classed('aes', false).classed('des', false);
     d3.select(th[0][i]).classed('aes', !ascending).classed('des', ascending);
@@ -137,7 +133,7 @@ class Table extends Clusterize {
       i = this.columns[i]; // index by field
     }
 
-    let ic=new Intl.Collator('en', {'sensitivity': 'base'});
+    let ic = new Intl.Collator('en', {'sensitivity': 'base'});
 
     function f(x, y) {
       // universal (?) comparison
@@ -158,7 +154,7 @@ class Table extends Clusterize {
         return 0;
       }
       if (typeof x === 'string') {
-        return ic.compare(x,y);
+        return ic.compare(x, y);
       }
       else if (typeof t === 'number') {
         return x - y;
@@ -174,14 +170,36 @@ class Table extends Clusterize {
         return ff(y, x);
       }
     }
+    let performance = window.performance,
+      t0 = performance.now();
     if (stable) {
       shaker_sort(data, f);
     } else {
       data.sort(f);
     }
     this.draw();
-    console.log("table.sort took " + (performance.now() - t0) + " milliseconds.")
+    console.log("table.sort took " + Math.round(performance.now() - t0) + " milliseconds.")
     return this; // for chaining
+  }
+
+  rowAsArray(row) {
+    // return row as the array of visible cells
+    if (!isArray(row)) { // suppose it's a dict
+      row = this.columns.map(function (d, i) {
+        return row[d]
+      })
+    }
+    return row;
+  }
+
+  rowAsString(d, sep = '\u3000') {
+    // sep is a very unlikely char to minimize the risk of wrong positive when searching
+    return this.rowAsArray(d).map(this._format).join(sep);
+  }
+
+  findInRow(d, what) {
+    // what must be in lowercase for
+    return this.rowAsString(d).toLowerCase().indexOf(what)
   }
 
   filter(f) {
@@ -193,16 +211,13 @@ class Table extends Clusterize {
     // assume f is a selection of an input field
     let table = this;
 
-    function anycolumn(d, i) {
+    this.filter(function (d, i) {
       // here, this is the input field, which is .bound
       let s = this.property("value"); // https://stackoverflow.com/a/31369759/1395973
       if (s === '') return true;
-      let row = table.rowAsArray(d);
-      row = row.map(table._format).join('\u3000') // very unlikely character
-      return row.toLowerCase().indexOf(s.toLowerCase()) !== -1
-    }
+      return table.findInRow(d, s.toLowerCase()) !== -1
+    }.bind(f)) // bind to the input field
 
-    this.filter(anycolumn.bind(f)) // assign the filter function
     f.on("input", function () { // set the update event of the input field
       table.draw();
     });
@@ -223,21 +238,11 @@ class Table extends Clusterize {
     return this.draw();
   }
 
-  rowAsArray(row) {
-    // return row as the array of visible cells
-    if (!isArray(row)) { // suppose it's a dict
-      row = table.columns.map(function (d, i) {
-        return row[d]
-      })
-    }
-    return row;
-  }
-
   draw() {
     let table = this;
     let d = this.data();
-    if (d.length===0) return table;
-    d=d.filter(table._filter);
+    if (d.length === 0) return table;
+    d = d.filter(table._filter);
     this.update(function (i) {
         let row = table.rowAsArray(d[i]);
         return '<tr id="r' + i + '">'  // way to find the data back. id must start with non numeric
@@ -289,17 +294,9 @@ class Table extends Clusterize {
     return this.data();
   }
 
-  indexOf(d) {
-    let i = this.data().indexOf(d);
-    if (i < 0) {
-      console.log(d + "not found in table");
-    }
-    return i;
-  }
-
   scrollTo(d, ms = 1000) {
     // smooth scroll to data d in ms milliseconds
-    let line = this.indexOf(d);
+    let line = this.data().indexOf(d);
     let node = this.scroll.node();
 
     let f = node.scrollHeight / this.data().length;
@@ -325,7 +322,7 @@ class Table extends Clusterize {
 
   select(d, i) {
     if (i === undefined) {
-      i = this.indexOf(d)
+      i = this.data().indexOf(d)
     }
     this._selected.add(i);
     let tr = this.rows.select("#r" + i);
@@ -340,7 +337,7 @@ class Table extends Clusterize {
         this.draw();
         return
       }
-      i = this.indexOf(d)
+      i = this.data().indexOf(d)
     }
     this._selected.delete(i);
     let tr = this.rows.select("#r" + i);
