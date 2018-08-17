@@ -255,6 +255,21 @@ class Table extends Clusterize {
       d.length
     );
 
+    table.resize();
+    return table;
+  }
+
+  // events
+
+  resize() {
+    let table = this;
+    // Makes header columns equal width to content columns
+    let scrollBarWidth = width(this.element)[0] - width(this.rows)[0],
+      td = this.rows.select('tr:not(.clusterize-extra-row)').selectAll('td'),
+      w = width(td);
+    w[w.length - 1] += scrollBarWidth;
+    width(this.thead.selectAll('th'), w);
+
     // (re)attach events to rows
 
     function fevent(e) {
@@ -343,17 +358,6 @@ class Table extends Clusterize {
     let tr = this.rows.select("#r" + i);
     tr.classed("highlight", false);
     return this; // for chaining
-  }
-
-  // events
-
-  resize() {
-    // Makes header columns equal width to content columns
-    let scrollBarWidth = width(this.element)[0] - width(this.rows)[0],
-      td = this.rows.select('tr:not(.clusterize-extra-row)').selectAll('td'),
-      w = width(td);
-    w[w.length - 1] += scrollBarWidth;
-    width(this.thead.selectAll('th'), w);
   }
 }
 
