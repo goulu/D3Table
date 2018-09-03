@@ -1,6 +1,6 @@
 {
   "name": "clusterize",
-  "description": "Tiny vanilla JS plugin to display large data sets easily",
+  "description": ""HUGE D3js Table driven by Clusterize.js",
   "main": [
     "clusterize.js", "clusterize.css"
   ],
@@ -9,11 +9,11 @@
     "globals", "amd", "commonjs"
   ],
   "keywords": [
-    "large", "table", "list", "scroll", "grid", "cluster"
+    "large", "table", "d3js"
   ],
   "authors": [
-    "Denis Lukov"
+    "Ph. Guglielmetti"
   ],
   "license": "GPLv3",
-  "homepage": "https://github.com/NeXTs/Clusterize.js"
+  "homepage": "https://github.com/goulu/D3Table"
 }
