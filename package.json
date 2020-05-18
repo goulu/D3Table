@@ -1,23 +1,27 @@
 {
   "name": "d3table",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "HUGE D3js Table driven by Clusterize.js",
   "main": "table.js",
   "style": "table.css",
-  "dependencies": {
-    "d3": ">=3"
-  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "browserify table.js --standalone Table -o dist/table.js"
   },
+  "dependencies": {
+    "clusterize.js": "https://github.com/goulu/Clusterize.js.git",
+    "d3": "^3"
+  },
+  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "git@github.com/goulu/D3Table.git"
   },
   "keywords": [
-    "large","table","D3js"
+    "large",
+    "table",
+    "D3js"
   ],
-  "author": "Goulu <npm@goulu.net> (https://www.npmjs.com/~goulu)",
+  "author": "Philippe Guglielmetti <npm@goulu.net> (https://www.npmjs.com/~goulu)",
   "license": "GPLv3",
   "bugs": {
     "url": "https://github.com/goulu/D3Table/issues"

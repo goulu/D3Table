@@ -1,8 +1,8 @@
 {
-  "name": "clusterize",
+  "name": "D3Table",
   "description": ""HUGE D3js Table driven by Clusterize.js",
   "main": [
-    "clusterize.js", "clusterize.css"
+    "table.js", "table.css"
   ],
   "ignore": [],
   "moduleType": [
