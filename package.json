@@ -1,6 +1,6 @@
 {
   "name": "d3table",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "HUGE D3js Table driven by Clusterize.js",
   "main": "table.js",
   "style": "table.css",
@@ -11,7 +11,9 @@
     "clusterize.js": "https://github.com/goulu/Clusterize.js.git",
     "d3": "^3"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "browserify": "^16.5.2"
+  },
   "repository": {
     "type": "git",
     "url": "git@github.com/goulu/D3Table.git"

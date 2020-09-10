@@ -18,8 +18,6 @@ const Clusterize = require('clusterize.js'),
 
 module.exports=class Table extends Clusterize {
 
-    static d3=d3;
-
     constructor(element, height = 400) {
         /* build DOM structure like this:
             <table>
