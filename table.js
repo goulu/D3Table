@@ -6,15 +6,10 @@ reusable D3.js class for (LARGE) tables
 * and https://www.kryogenix.org/code/browser/sorttable/)
 
 @author  Philippe Guglielmetti https://github.com/goulu/
-@license LGPL 3
-@version 0.2
-@updated 2018.07.02
-
  */
 
-const Clusterize = require('clusterize.js'),
-    d3 = require('d3');
-
+import {Clusterize} from 'clusterize.js'
+import * as d3 from 'd3'
 
 module.exports=class Table extends Clusterize {
 
