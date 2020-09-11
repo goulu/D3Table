@@ -1,9 +1,9 @@
 {
   "name": "d3table",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "HUGE D3js Table driven by Clusterize.js",
-  "main": "table.js",
-  "style": "table.css",
+  "main": "dist/table.js",
+  "style": "dist/table.css",
   "keywords": [
     "large",
     "table",
