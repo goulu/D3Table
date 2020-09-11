@@ -8,10 +8,10 @@ reusable D3.js class for (LARGE) tables
 @author  Philippe Guglielmetti https://github.com/goulu/
  */
 
-import {Clusterize} from 'clusterize.js'
+import * as Clusterize from './clusterize.js'
 import * as d3 from 'd3'
 
-module.exports=class Table extends Clusterize {
+export class Table extends Clusterize {
 
     constructor(element, height = 400) {
         /* build DOM structure like this:

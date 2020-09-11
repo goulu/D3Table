@@ -1,3 +1,4 @@
 call npm install
 call npm run-script build
-copy *.css dist
+copy src/*.css dist
+copy src/*.html dist

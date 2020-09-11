@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>D3Table</title>
+  <link rel="stylesheet" href="./table.css">
+  <script src="https://d3js.org/d3.v3.js"></script>
+</head>
+
+<body>
+  <h1>Table using D3.js and clusterize.js</h1>
+  The following table:
+  <ol>
+    <li>dynamically loaded <span id="rows">many</span> rows, but only <span id="few">a few</span>
+      &lt;TR&gt; are in the DOM, which makes scrolling very fast (try!)
+    </li>
+    <li>is sortable (click the headers)</li>
+    <li>is filterable (try using <input id="filter">)</li>
+    <li>scrolls smoothly to any row (try using <input id="search">)</li>
+    <li>uses a custom format function (to change null values into "?")</li>
+    <li>reacts to mouseover, mouseleave, click and dblclick events</li>
+  </ol>
+  <div class="table">
+  </div>
+  Thanks to:
+  <ul>
+    <li>the fantastic D3js (V3)</li>
+    <li>Clusterize.js (in fact it currently uses <a href="https://github.com/goulu/Clusterize.js">my fork of
+        clusterize.js</a> which allows to specify a function providing data for each row
+    </li>
+    <li>https://github.com/jdorfman/awesome-json-datasets</li>
+  </ul>
+  <script src="./test.js"></script>
+</body>
+</html>
