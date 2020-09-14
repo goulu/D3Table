@@ -1,9 +1,11 @@
 const path = require('path');
 
 module.exports = {
-  entry: {
-    table: './src/table.js',
-    test: './src/test.js',
+  entry:  './src/table.js',
+  output: {
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'table.js',
+    library: 'd3table',
   },
   externals : ['d3'],
   mode: 'development',
